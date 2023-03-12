@@ -76,7 +76,7 @@ SimulationFunction_exact = function(number_taxa, number_quads, repeats, data1, d
       test_2_res = "FTT"
       test_2_rounds = max(test_FTT_sim$round)
     } else {
-      test_2_res = "not FTT"
+      test_2_res = "not resolvable"
       test_2_rounds = max(test_FTT_sim$round) + 1
     } 
     time1 = Sys.time()
