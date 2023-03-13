@@ -104,12 +104,12 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
   # j=5
   message("\nWorking on n=7, k=",j)
   time1 = Sys.time()
-  myTest = SimulationFunction_exact(number_taxa = n, 
-                                    number_quads = j,
-                                    repeats = 10000,
-                                    data1 = test1,
-                                    data2 = myTab_n07,
-                                    verbose = T)
+  myTest = SimulationFunction(number_taxa = n, 
+                              number_quads = j,
+                              repeats = 10000,
+                              data1 = test1,
+                              data2 = myTab_n07,
+                              verbose = T)
   time2 = Sys.time()
   x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
   message("       Total time for n=7, k=",j," & rep = 100: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
