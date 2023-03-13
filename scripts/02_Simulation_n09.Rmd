@@ -1,0 +1,155 @@
+---
+output: github_document
+---
+
+<!-- 02_Simulation_n09.md is generated from 02_Simulation_n09.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+I want to run a simulation for n=9 taxa. There are 70 possible quadruples with n=9 taxa, and I want to test 100000 possible combinations for each k out of 70 quadruples for phylogenetic decisiveness.
+
+For each random set of quadruples, I test both the 4-way-partition-property and the Fixing Taxon Traceability algorithm (**FTT**, test), implemented in the R package **FixingTaxonTraceR**. 
+
+# Initialize
+
+I use a file named *SourceFile.R* that contains all relevant R packages and user-/server-specific path to the R library. If using this code, you must make all the necessary changes within the template source file. 
+
+```{r init}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+source("../helperFunctions/SimulationFunction.R")
+
+```
+
+# Get input data
+
+In *myTab_n9*, there are all possible Four-way-partitions (4WPP) given n=9 taxa. 
+
+```{r input}
+# Load initial input data
+test1 = FTT_createInput(fn="../data/S9_Decisive.txt",sepSym = "_",c = 4)
+
+# Sanity check of FTT package
+test_FTT = FTT_algorithmRed(data = test1$data,verbose = T, c=4, n=9)
+#test_NRC = FTT_findNRC(data = test1)
+
+load("../results/01_partitions/partitions_n09.RData")
+
+```
+
+# Test-Loop with 10 combinations per k
+
+To test less $k$, I use the more strict lower bound for touple numbers (see FTT R Package for more explanation).
+
+```{r testloop}
+test1$data[,status:=NA]
+n=9
+LowerBound = (1/6) * 4 * choose(n,2)
+UpperBound = choose(n,4) - n + 3
+
+dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
+  # j=24
+  message("\nWorking on n=9, k=",j)
+  time1 = Sys.time()
+  myTest = SimulationFunction(number_taxa = n, 
+                              number_quads = j,
+                              repeats = 10,
+                              data1 = test1,
+                              data2 = myTab_n09,
+                              verbose = F,
+                              FFT_only_if_PhyloDec = T)
+  time2 = Sys.time()
+  x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
+  message("       Total time for n=9, k=",j," & rep = 10: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
+  
+  outfn = paste0("../temp/02_SimulationsData_n09/SimulationResults_n9_k",j,".RData")
+  save(myTest,file = outfn)
+  
+  tab = table(myTest$FWPP,myTest$FTT)
+  x2 = myTest[FWPP == "PhyloDec" & FTT == "FTT",.N]
+  x3 = myTest[FWPP == "NOT PhyloDec",.N]
+  x4 = myTest[FWPP == "PhyloDec",.N]
+  
+  message("       There were ",x2," of ",x4," sets identified by Fischers algorith as decisive (",round(x2/x4,4)*100,"%)")
+  
+  res = data.table(k = j,
+                   time = x0,
+                   NR_NotPhyloDec = x3,
+                   NR_PhyloDec = x4,
+                   NR_FTT = x2)
+  res
+}
+SimulationResults_n09_test = rbindlist(dumTab)
+
+SimulationResults_n09_test[,posRate := NR_FTT/NR_PhyloDec]
+SimulationResults_n09_test[NR_PhyloDec==0,posRate := NA]
+SimulationResults_n09_test[NR_PhyloDec>0,]
+
+```
+
+# Loop with all combinations
+
+```{r simloop, eval=F}
+dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
+  # j=5
+  message("\nWorking on n=9, k=",j)
+  time1 = Sys.time()
+  myTest = SimulationFunction(number_taxa = n, 
+                              number_quads = j,
+                              repeats = 10000,
+                              data1 = test1,
+                              data2 = myTab_n09,
+                              verbose = T,
+                              FFT_only_if_PhyloDec = T)
+  time2 = Sys.time()
+  x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
+  message("       Total time for n=9, k=",j," & rep = 100: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
+  
+  outfn = paste0("../results/02_SimulationsData_n09/SimulationResults_n9_k",k,"_rep10000.RData")
+  save(myTest,file = outfn)
+
+  tab = table(myTest$FWPP,myTest$FTT)
+  x2 = myTest[FWPP == "PhyloDec" & FTT == "FTT",.N]
+  x3 = myTest[FWPP == "NOT PhyloDec",.N]
+  x4 = myTest[FWPP == "PhyloDec",.N]
+  
+  message("       There were ",x2," of ",x4," sets identified by Fischers algorith as decisive (",round(x2/x4,4)*100,"%)")
+  
+  res = data.table(k = j,
+                   time = x0,
+                   NR_NotPhyloDec = x3,
+                   NR_PhyloDec = x4,
+                   NR_FTT = x2)
+  res
+}
+SimulationResults_n09 = rbindlist(dumTab)
+
+SimulationResults_n09[,posRate := NR_FTT/NR_PhyloDec]
+SimulationResults_n09[NR_PhyloDec==0,posRate := NA]
+save(SimulationResults_n09, file = "../results/02_SimulationResults_n09.RData")
+
+SimulationResults_n09[NR_PhyloDec>0,]
+
+```
+
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
