@@ -39,6 +39,5 @@ vignettes/*.pdf
 .Renviron
 
 # other stuff
-scripts/*.md
 archive/*
 temp/*
