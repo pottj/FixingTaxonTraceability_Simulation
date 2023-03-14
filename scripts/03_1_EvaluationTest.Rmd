@@ -1,0 +1,327 @@
+---
+title: "Evaluation 1: get test properties"
+author: "Janne Pott"
+date: "13/03/2023"
+output: pdf_document
+---
+
+<!-- 03_1_EvaluationTest.md is generated from 03_1_EvaluationTest.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Summary of Simulations
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+What did I simulate?
+
+**Preparation**: create all possible quadruples and all possible 4-way partitions (4WP) for $n=6, ..., 10$ taxa
+
+**Simulation**: for $n$ taxa, there are $K_n=\binom{n}{4}$ possible quadruples. For each $k \in \{1, ..., K_n\}$, there are $M_k=\binom{K_n}{k}$ combinations of quadruples as input and 10,000 of these $M_k$ combinations are used in the simulation. Each combination is tested for phylogenetic decisiveness according to 4WPP (truth) and fixing tacon traceability (test). 
+
+**Here**: Summary of the simulation results (barplots, negative predictive value, power). 
+ 
+Upper bound: it was already shown that given an input of $\binom{n}{4} - (n-4)$ quadruples, all sets are phylogenetic decisive: 
+ 
+* $n=6$: $15-2 = 13$
+* $n=7$: $35-3 = 32$
+* $n=8$: $70-4 = 66$
+* $n=9$: $126-5 = 121$
+* $n=10$: $210-6 = 204$
+
+Lower bound: there is no simple formula, but I use here my lower bound from my master thesis (set size that covers all triples or that covers all tuples adequately):
+ 
+* $n=6$: 6
+* $n=7$: 11
+* $n=8$: 14
+* $n=9$: 24
+* $n=10$: 30
+ 
+# Initialize
+
+I use a file names *SourceFile.R* that contains all relevant R packages and user-/server-specific path to the R library. If using this code, you must make all the necessary changes within the template source file. 
+
+```{r init}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+source("../helperFunctions/TestHelpRFunction.R")
+source("../helperFunctions/ShiftLegendBarplot.R")
+
+x_lowerBound = c()
+x_upperBound = c()
+
+for(i in 6:10){
+  #i=7
+  y = i %% 6
+  
+  if(y==0){
+    min_quad = 0.25 * choose(i,3) + i/6
+  }else if(y %in% c(2,4)){
+    min_quad = 0.25 * choose(i,3)
+  }else{
+    min_quad = (1/6) * ((i-1)/2) * choose(i,2) + i/12
+    min_quad = ceiling(min_quad)
+  }
+  x_lowerBound = c(x_lowerBound,min_quad)
+  max_quad = choose(i,4) - (i-4)
+  x_upperBound = c(x_upperBound,max_quad)
+}
+
+```
+
+# Get data
+
+```{r input}
+load("../results/02_SimulationResults_n06.RData")
+load("../results/02_SimulationResults_n07.RData")
+load("../results/02_SimulationResults_n08.RData")
+load("../results/02_SimulationResults_n09.RData")
+load("../results/02_SimulationResults_n10.RData")
+
+SimulationResults_n06[,n := 6]
+SimulationResults_n07[,n := 7]
+SimulationResults_n08[,n := 8]
+SimulationResults_n09[,n := 9]
+SimulationResults_n10[,n := 10]
+
+sim_n6 = SimulationResults_n06[k>=x_lowerBound[1] & k<=x_upperBound[1]]
+sim_n7 = SimulationResults_n07[k>=x_lowerBound[2] & k<=x_upperBound[2]]
+sim_n8 = SimulationResults_n08[k>=x_lowerBound[3] & k<=x_upperBound[3]]
+sim_n9 = SimulationResults_n09[k>=x_lowerBound[4] & k<=x_upperBound[4]]
+sim_n10 = SimulationResults_n10[k>=x_lowerBound[5] & k<=x_upperBound[5]]
+
+sim = rbind(sim_n6,sim_n7,sim_n8,sim_n9,sim_n10)
+table(sim$n)
+
+```
+
+# Bar plots
+
+```{r barplots}
+dumTab1 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  x1 = dim(mySim)[1]
+  
+  PlotData = data.table(n = i, 
+                        k = rep(mySim$k,2),
+                        phyloDec = c(mySim$NR_FTT,mySim$NR_PhyloDec),
+                        category = c(rep("FTT",x1),rep("4WPP",x1)))
+  ggplot(data=PlotData,aes(fill=category, y=phyloDec, x=k)) + 
+    geom_bar(position="dodge", stat="identity")
+  
+  PlotData
+}
+BarPlotData = rbindlist(dumTab1)
+
+p1 = ggplot(data=BarPlotData,aes(fill=category, y=phyloDec, x=k)) + 
+  facet_wrap(vars(n), nrow = 2, scales = "free") +
+  geom_bar(position="dodge", stat="identity")
+grid.draw(ShiftLegendBarplot(p1))
+
+```
+
+# Line plots
+
+```{r lineplots}
+dumTab2 = foreach(i=6:10)%do%{
+  #i=6
+  dum = choose(i,4)
+  dum2 = copy(sim)
+  dum2 = dum2[n==i]
+  dum2[,prop_4WPP := NR_PhyloDec/(NR_PhyloDec + NR_NotPhyloDec)]
+  dum2[,prop_FTT := NR_FTT/(NR_PhyloDec + NR_NotPhyloDec)]
+  #dum2 = dum2[!is.na(posRate)]
+  dum2[,k2 := k/dum]
+  dum2
+}
+LinePlotData2 = rbindlist(dumTab2)
+
+dumTab3 = foreach(i=6:10)%do%{
+  #i=6
+  dum = choose(i,4)
+  x = choose(i-1,3)-1
+  y = x/dum
+  a = choose(i,4) - (3*i-13)
+  b = a/dum
+  
+  dum2 = copy(sim)
+  dum2 = dum2[!is.na(posRate)]
+  dum2 = dum2[n==i]
+  dum2 = dum2[posRate==1,]
+  v = min(dum2$k)
+  w = v/dum
+  res = data.table(n=i, vline1_abs = x, vline2_abs = a, vline3_abs = v, 
+                   vline1_rel = y, vline2_rel = b, vline3_rel = w)
+}
+data_vline = rbindlist(dumTab3)
+
+p2 <- ggplot(LinePlotData2[!is.na(posRate),]) +
+  geom_line(aes(x=k, y=prop_FTT, col=as.factor(1)),linewidth=1,alpha=0.5) +
+  geom_line(aes(x=k, y=prop_4WPP,col=as.factor(2)),linewidth=1,alpha=0.5)+
+  geom_vline(data = data_vline,aes(xintercept = vline1_abs,col =as.factor(3))) +
+  geom_vline(data = data_vline,aes(xintercept = vline2_abs,col =as.factor(4))) +
+  geom_vline(data = data_vline,aes(xintercept = vline3_abs,col =as.factor(5))) +
+  facet_wrap(~ n, nrow = 3, scales = "free_x",strip.position = "top") +
+  theme(strip.background = element_blank(), 
+        strip.placement = "outside")+
+  labs(x="Number of input quadruples                                            ", 
+       y = "Proportion of correct identification",
+       color = "Legend") + 
+  scale_color_manual(values = c("darkblue","orange","darkgreen","darkred","lightblue"),
+                     labels = c("Proportion of phylo. dec. sets",
+                                "Proportion of FTT sets",
+                                "Lower bound of FTT",
+                                "Upper bound of FTT",
+                                "Upper bound of FTT (sim)"))
+#,"upper bound","upper bound (simulation)"
+
+
+grid.draw(ShiftLegendBarplot(p2))
+
+
+```
+
+#  Contingency tables (overall)
+
+* Prevalence = actual positive (P) / all (N+P)
+* PPV = Positive Predictive Value = true positives (TP) / predicted positives (PP) = conditional probability P(true state positive | prediction positive)
+* NPV = Negative Predictive Value = true negatives (TN) / predicted negatives = conditional probability P(true state negative | prediction negative)
+* TPR = True Positive Rate = sensitivity = power = TP / P
+* TNR = True Negative Rate = specificity = TN / N
+* see also [Wikipedia](https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values)
+
+
+```{r  contingencyTables1, eval=TRUE}
+dumTab2 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  stats = TestHelpRFunction(P = sum(mySim$NR_PhyloDec),
+                        N = sum(mySim$NR_NotPhyloDec),
+                        PP = sum(mySim$NR_FTT))
+  stats[,n:=i]
+  stats
+}
+myStats = rbindlist(dumTab2)
+myStats
+
+```
+
+**Fazit 1**: NPV is about 98%, i.e. there is a 98% probability that a negative set is really not phylogenically decisive 
+ 
+**Fazit 2**: The power of the algorithm (TPR) is also about 98%. 
+
+#  Contingency tables (per k)
+
+```{r contingencyTables2}
+dumTab3 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  
+  dumTab4 = foreach(k = 1:dim(mySim)[1])%do%{
+    # k=1
+    myRow = copy(mySim)
+    myRow = myRow[k,]
+    
+    stats_k = TestHelpRFunction(P = myRow$NR_PhyloDec,
+                            N = myRow$NR_NotPhyloDec,
+                            PP = myRow$NR_FTT)
+    stats_k[,n :=i]
+    stats_k[,k := myRow$k]
+    stats_k
+  }
+  myStats_k = rbindlist(dumTab4)
+  myStats_k
+}
+myStats_k = rbindlist(dumTab3)
+
+filt_TPR = !is.na(myStats_k$TPR)
+filt_NPV = !is.na(myStats_k$NPV)
+
+boxplot(myStats_k$TPR[filt_TPR] ~ myStats_k$n[filt_TPR],
+        xlab = "number of taxa",
+        ylab = "power")
+boxplot(myStats_k$NPV[filt_NPV] ~ myStats_k$n[filt_NPV],
+        xlab = "number of taxa",
+        ylab = "NPV")
+
+tab6 = myStats_k[n==6 & filt_TPR,summary(TPR)]
+tab7 = myStats_k[n==7 & filt_TPR,summary(TPR)]
+tab8 = myStats_k[n==8 & filt_TPR,summary(TPR)]
+tab9 = myStats_k[n==9 & filt_TPR,summary(TPR)]
+tab10 = myStats_k[n==10 & filt_TPR,summary(TPR)]
+tab_TPR = rbind(tab6,tab7,tab8,tab9,tab10)
+
+tab6 = myStats_k[n==6 & filt_NPV,summary(NPV)]
+tab7 = myStats_k[n==7 & filt_NPV,summary(NPV)]
+tab8 = myStats_k[n==8 & filt_NPV,summary(NPV)]
+tab9 = myStats_k[n==9 & filt_NPV,summary(NPV)]
+tab10 = myStats_k[n==10 & filt_NPV,summary(NPV)]
+tab_NPV = rbind(tab6,tab7,tab8,tab9,tab10)
+
+tabs = as.data.table(rbind(tab_NPV,tab_TPR))
+tabs[,n:=rep(c(6:10),2)]
+tabs[,Parameter:=c(rep("NPV",5),rep("TPR",5))]
+tabs = tabs[,c(8,7,1:6)]
+tabs
+
+# Plotting
+LinePlotData3 = copy(myStats_k)
+LinePlotData3 = LinePlotData3[!is.na(PPV)]
+
+p3 <- ggplot(LinePlotData3) +
+  geom_line(aes(x=k, y=NPV, col=as.factor(1)),linewidth=1,alpha=0.5) +
+  geom_line(aes(x=k, y=TPR,col=as.factor(2)),linewidth=1,alpha=0.5)+
+  facet_wrap(~ n, nrow = 3, scales = "free_x",strip.position = "top") +
+  theme(strip.background = element_blank(), 
+        strip.placement = "outside")+
+  labs(x="Number of input quadruples                                            ",
+       y = "",
+       color = "Legend") + 
+  scale_color_manual(values = c("darkblue","orange"),
+                     labels = c("Negative Predictive Value",
+                                "True Positive Rate (Power)"))
+#,"upper bound","upper bound (simulation)"
+
+
+grid.draw(ShiftLegendBarplot(p3))
+
+test = copy(LinePlotData3)[TPR>0.9,]
+test = test[!duplicated(n)] 
+test[,allQ := choose(n,4)]
+test[,prop := k/allQ]
+test
+```
+
+# Some total numbers
+
+```{r}
+sumSim = sum(sim$NR_NotPhyloDec,sim$NR_PhyloDec)
+sumPhyloDec = sum(sim$NR_PhyloDec)
+sumFTT = sum(sim$NR_FTT)
+
+sumPhyloDec/sumSim
+
+sumFTT/sumPhyloDec
+
+```
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
