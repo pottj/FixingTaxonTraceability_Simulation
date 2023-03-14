@@ -126,7 +126,13 @@ BarPlotData = rbindlist(dumTab1)
 
 p1 = ggplot(data=BarPlotData,aes(fill=category, y=phyloDec, x=k)) + 
   facet_wrap(vars(n), nrow = 2, scales = "free") +
-  geom_bar(position="dodge", stat="identity")
+  geom_bar(position="dodge", stat="identity") + 
+  labs(x="Number of input quadruples                        ",
+       y = "Correct identification",
+       color = "Legend") + 
+  scale_color_manual(values = c("darkblue","orange"),
+                     labels = c("Four-way partition property",
+                                "Fixing taxon traceable"))
 grid.draw(ShiftLegendBarplot(p1))
 
 ```
