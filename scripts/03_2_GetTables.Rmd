@@ -1,0 +1,206 @@
+---
+title: "Evaluation 2: get table 1"
+author: "Janne Pott"
+date: "13/03/2023"
+output: pdf_document
+---
+
+<!-- 03_2_GetTables.md is generated from 03_2_GetTables.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+In our manuscript, we present the summary of the simulation study in Table 1. In part, this was done before, but here I want to present it a bit nicer. This includes for all analyzed $n$ over all tested $k$ with at least one phylogenetic set:
+
+* Prevalence of phylogenetic decisive sets in simulation (overall, min, max)
+* True Positive Rate (TPR, sensitivity, power) (overall, min, max)
+* Negative Predictive Value (NPV) (overall, min, max)
+* Minimal set size satisfying the 4-way partition property (4WPP) in the simulation 
+* Minimal set size which is fixing taxon traceable (FTT) in the simulation
+
+In addition, I want a second table with more number, not necessarily out of the simulation
+
+* Minimal set size satisfying the 4-way partition property
+* Maximal set size not satisfying the 4-way partition property
+* Minimal set size which is fixing taxon traceable
+* Maximal set size which satisfy the 4-way partition property but is not fixing taxon traceable
+
+# Initialize
+
+I use a file names *SourceFile.R* that contains all relevant R packages and user-/server-specific path to the R library. If using this code, you must make all the necessary changes within the template source file. 
+
+```{r init}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+source("../helperFunctions/TestHelpRFunction.R")
+
+x_lowerBound = c()
+x_upperBound = c()
+
+for(i in 6:10){
+  #i=7
+  y = i %% 6
+  
+  if(y==0){
+    min_quad = 0.25 * choose(i,3) + i/6
+  }else if(y %in% c(2,4)){
+    min_quad = 0.25 * choose(i,3)
+  }else{
+    min_quad = (1/6) * ((i-1)/2) * choose(i,2) + i/12
+    min_quad = ceiling(min_quad)
+  }
+  x_lowerBound = c(x_lowerBound,min_quad)
+  max_quad = choose(i,4) - (i-4)
+  x_upperBound = c(x_upperBound,max_quad)
+}
+
+load("../results/02_SimulationResults_n06.RData")
+load("../results/02_SimulationResults_n07.RData")
+load("../results/02_SimulationResults_n08.RData")
+load("../results/02_SimulationResults_n09.RData")
+load("../results/02_SimulationResults_n10.RData")
+
+SimulationResults_n06[,n := 6]
+SimulationResults_n07[,n := 7]
+SimulationResults_n08[,n := 8]
+SimulationResults_n09[,n := 9]
+SimulationResults_n10[,n := 10]
+
+sim_n6 = SimulationResults_n06[k>=x_lowerBound[1] & k<=x_upperBound[1]]
+sim_n7 = SimulationResults_n07[k>=x_lowerBound[2] & k<=x_upperBound[2]]
+sim_n8 = SimulationResults_n08[k>=x_lowerBound[3] & k<=x_upperBound[3]]
+sim_n9 = SimulationResults_n09[k>=x_lowerBound[4] & k<=x_upperBound[4]]
+sim_n10 = SimulationResults_n10[k>=x_lowerBound[5] & k<=x_upperBound[5]]
+
+sim = rbind(sim_n6,sim_n7,sim_n8,sim_n9,sim_n10)
+table(sim$n)
+
+```
+
+# Get Table 1
+
+```{r  contingencyTables1, eval=TRUE}
+dumTab2 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  stats = TestHelpRFunction(P = sum(mySim$NR_PhyloDec),
+                        N = sum(mySim$NR_NotPhyloDec),
+                        PP = sum(mySim$NR_FTT))
+  stats[,n:=i]
+  stats
+}
+myStats = rbindlist(dumTab2)
+myStats
+
+dumTab3 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  
+  dumTab4 = foreach(k = 1:dim(mySim)[1])%do%{
+    # k=1
+    myRow = copy(mySim)
+    myRow = myRow[k,]
+    
+    stats_k = TestHelpRFunction(P = myRow$NR_PhyloDec,
+                            N = myRow$NR_NotPhyloDec,
+                            PP = myRow$NR_FTT)
+    stats_k[,n :=i]
+    stats_k[,k := myRow$k]
+    stats_k
+  }
+  myStats_k = rbindlist(dumTab4)
+  myStats_k
+}
+myStats_k = rbindlist(dumTab3)
+
+x1 = myStats_k[Prevalence!=0,min(k),by = n]
+x2 = myStats_k[Prevalence!=0 & TPR>0,min(k),by = n]
+
+tab1 = copy(x1)
+setnames(tab1,"V1","k_min_4WPP")
+tab1[,k_min_FTT := x2$V1]
+
+filt_TPR = !is.na(myStats_k$TPR)
+tab6 = myStats_k[n==6 & filt_TPR,summary(TPR)]
+tab7 = myStats_k[n==7 & filt_TPR,summary(TPR)]
+tab8 = myStats_k[n==8 & filt_TPR,summary(TPR)]
+tab9 = myStats_k[n==9 & filt_TPR,summary(TPR)]
+tab10 = myStats_k[n==10 & filt_TPR,summary(TPR)]
+tab_TPR = rbind(tab6,tab7,tab8,tab9,tab10)
+tab1[,TPR := signif(tab_TPR[,3],2)]
+tab1[,TPR_IQR := paste0("[",signif(tab_TPR[,2],2),",",signif(tab_TPR[,5],2),"]")]
+
+filt_NPV = !is.na(myStats_k$NPV)
+tab6 = myStats_k[n==6 & filt_NPV,summary(NPV)]
+tab7 = myStats_k[n==7 & filt_NPV,summary(NPV)]
+tab8 = myStats_k[n==8 & filt_NPV,summary(NPV)]
+tab9 = myStats_k[n==9 & filt_NPV,summary(NPV)]
+tab10 = myStats_k[n==10 & filt_NPV,summary(NPV)]
+tab_NPV = rbind(tab6,tab7,tab8,tab9,tab10)
+tab1[,NPV := signif(tab_NPV[,3],2)]
+tab1[,NPV_IQR := paste0("[",signif(tab_NPV[,2],2),",",signif(tab_NPV[,5],2),"]")]
+
+tab6 = myStats_k[n==6 & Prevalence!=0,summary(Prevalence)]
+tab7 = myStats_k[n==7 & Prevalence!=0,summary(Prevalence)]
+tab8 = myStats_k[n==8 & Prevalence!=0,summary(Prevalence)]
+tab9 = myStats_k[n==9 & Prevalence!=0,summary(Prevalence)]
+tab10 = myStats_k[n==10 & Prevalence!=0,summary(Prevalence)]
+tab_Prev = rbind(tab6,tab7,tab8,tab9,tab10)
+tab1[,Prev := signif(tab_Prev[,3],2)]
+tab1[,Prev_IQR := paste0("[",signif(tab_Prev[,2],2),",",signif(tab_Prev[,5],2),"]")]
+tab1
+knitr::kable(tab1)
+```
+
+# Get Table 2
+
+* Minimal set size satisfying the 4-way partition property
+* Maximal set size not satisfying the 4-way partition property
+* Minimal set size which is fixing taxon traceable
+* Maximal set size which satisfy the 4-way partition property but is not fixing taxon traceable
+
+```{r}
+x1 = myStats_k[Prevalence!=0,min(k),by = n]
+y1 = myStats_k[Prevalence<1,max(k),by = n]
+x2 = myStats_k[Prevalence!=0 & TPR>0,min(k),by = n]
+y2 = sim[posRate<1,max(k),by = n]
+
+y3 = c()
+for(i in 6:10){
+  #i=6
+  dum = choose(i,4) - 3*i +13
+  y3[i-5]=dum
+}
+
+tab2 = copy(x1)
+setnames(tab2,"V1","k_min_4WPP")
+tab2[,k_max_4WPP_sim := y1$V1]
+tab2[,k_max_4WPP_theo := x_upperBound-1]
+tab2[,k_min_FTT := x2$V1]
+tab2[,k_max_diff_sim := y2$V1]
+tab2[,k_max_diff_theo := y3]
+
+tab2 = t(tab2)
+knitr::kable(tab2)
+
+
+
+```
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
