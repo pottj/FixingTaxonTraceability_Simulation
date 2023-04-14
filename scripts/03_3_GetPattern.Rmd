@@ -1,0 +1,219 @@
+---
+title: "Evaluation 3: get more numbers"
+subtitle: "Simulation evaluation"
+author: "Janne Pott"
+date: "13.04.2022"
+output: html_document
+---  
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+In our paper, we propose an upper bound for sets that are phylogenetic decisive (satisfying the 4-way partition property, 4WPP), but are not fixing taxon traceable. We give an example on how to construct such sets for any n by induction. The bound is given as
+
+$$\binom{n}{4} - 3*n + 13$$
+
+Here, I want to check not if we had one of those sets in our simulation, but how many such sets were created during the simulation. E.g., for $n=8$, the bound is $\binom{8}{4} - 3*8 + 13 = 70 - 24 + 13 = 59$. In our simulation, all sets with $k_{8}=59$ were correctly identified, either as decisive **and** fixing taxon traceable (FTT), or as not decisive **and** not FTT. However, there could be sets starting at $k_{start}<59$, that could be filled with some quadruples by fixing taxons, but not all quadruples. So at the end of the algorithm, there are $k_{start}+x$ quadruples input or resolved, but still not all. The question is, how many end at our bound?
+
+
+```{r setup}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+
+```
+
+# Load data
+
+```{r load}
+load("../results/02_SimulationResults_n06.RData")
+load("../results/02_SimulationResults_n07.RData")
+load("../results/02_SimulationResults_n08.RData")
+load("../results/02_SimulationResults_n09.RData")
+load("../results/02_SimulationResults_n10.RData")
+
+SimulationResults_n06[,n := 6]
+SimulationResults_n07[,n := 7]
+SimulationResults_n08[,n := 8]
+SimulationResults_n09[,n := 9]
+SimulationResults_n10[,n := 10]
+
+sim = rbind(SimulationResults_n06,SimulationResults_n07,SimulationResults_n08,SimulationResults_n09,SimulationResults_n10)
+Sim = copy(sim)
+Sim = Sim[NR_PhyloDec>0,]
+Sim[,sum(NR_PhyloDec)]
+Sim[,sum(NR_PhyloDec)] - Sim[,sum(NR_FTT)]
+
+dumTab = foreach(i=1:dim(Sim)[1])%do%{
+  #i=1
+  myRow = Sim[i,]
+  myk = myRow$k
+  myn = myRow$n
+  
+  if(myn<10){
+      filefn = paste0("../results/02_SimulationsData_n0",myn,"/SimulationResults_n",myn,"_k",myk,"_rep10000.RData")
+  }else{
+      filefn = paste0("../results/02_SimulationsData_n",myn,"/SimulationResults_n",myn,"_k",myk,"_rep10000.RData")
+  }
+  load(filefn)
+  myTest = myTest[FWPP == "PhyloDec",]
+  res = data.table(n=myn, 
+                   k=myk, 
+                   FWPP = T, 
+                   FixingTaxa = F,
+                   input = myTest$input)
+  filt = myTest$FTT =="FTT" 
+  res[filt,FixingTaxa:=T]
+  res = res[!filt,]
+  res
+}
+
+PhyloDecSets_notFTT = rbindlist(dumTab)
+PhyloDecSets_notFTT[,table(n)]
+
+```
+
+Okay, there are 1,740,621 phylogenetic decisive sets, of which only 19,588 ar **not** also fixing taxon traceable. THis is a bit more than 1%. 
+
+# Test data 
+
+These 19,588 sets I want to test again. I know they are not FTT, but I want to know how many resolved quraduples can be added to the input quadruples, hence getting the $k_{end}$. 
+
+```{r test}
+y = seq(from=1,to=dim(PhyloDecSets_notFTT)[1],by=500)
+
+registerDoMC(cores=20)
+
+test = foreach(i=1:dim(PhyloDecSets_notFTT)[1])%dopar%{
+#test = foreach(i=1:500)%dopar%{
+  #i=1
+  if(i %in% y)message("Working on i=",i)
+  myRow = PhyloDecSets_notFTT[i,]
+  myRow[,NR := i]
+  myInput = myRow$input
+  myInput = unlist(strsplit(myInput,split = "[|]"))
+  myOutput = data.table(myInput = myInput)
+  
+  myFn = paste0("../results/03_Simulation_checkBound/Example_NR",i,"_n",myRow$n,"_k",myRow$k,".txt")
+  
+  if(file.exists(myFn)==F) fwrite(myOutput,file=myFn,col.names = F)
+  TestData = FTT_createInput(fn = myFn, sepSym = "_",c = 4)
+  TestFTT = FTT_algorithmRed(data=TestData$data,verbose = F,c = 4,n = myRow$n)
+  stopifnot(sum(TestFTT$status=="input") == myRow$k)
+  
+  myRow[,n_resolved :=sum(TestFTT$status=="resolved") ]
+  myRow[,n_unResolved :=sum(TestFTT$status=="unresolved") ]
+  myRow[,n_green := k + n_resolved]
+  
+  solvedTaxa = c(TestFTT[status != "unresolved",taxa1],
+                 TestFTT[status != "unresolved",taxa2],
+                 TestFTT[status != "unresolved",taxa3],
+                 TestFTT[status != "unresolved",taxa4])
+  inputTaxa = c(TestFTT[status == "input",taxa1],
+                 TestFTT[status == "input",taxa2],
+                 TestFTT[status == "input",taxa3],
+                 TestFTT[status == "input",taxa4])
+  
+  x1 = table(solvedTaxa)
+  x2 = as.numeric(x1)
+  x3 = paste(x2,collapse = "|")
+  x4 = x2[order(x2)]
+  x5 = paste(x4,collapse = "|")
+
+  x1 = table(inputTaxa)
+  x2 = as.numeric(x1)
+  x7 = paste(x2,collapse = "|")
+  x4 = x2[order(x2)]
+  x9 = paste(x4,collapse = "|")
+
+  myRow[,solvedTaxa := x3]
+  myRow[,solvedTaxa_ordered := x5]
+  myRow[,inputTaxa := x7]
+  myRow[,inputTaxa_ordered := x9]
+  myRow
+}  
+
+PhyloDecSets_notFTT = rbindlist(test)
+save(PhyloDecSets_notFTT,file = "../results/03_Simulation_checkForPattern.RData")
+
+```
+
+# Check for patterns
+
+So I have for each of the phylogenetic sets that are not FTT the input, resolved, and remaining unresolved quadruples. Now I want to check the pattern of these sets (input + resolved quadruples). I want the following information per $n$:
+
+- Number of all possible quadruples, $\binom{n}{4}$
+- Number of all possible quadruples containing a specific taxa, $\binom{n}{3}$
+- Number of *green* quadruples (input + resolved)
+- Number of *red* quadruples (unresolved)
+- Number of *green* quadruples containing a specific taxa, $\binom{n}{3}$, assuming all *red* quadruples have one taxon in common, $\binom{n}{3} - red$
+- Numbers of observed taxa across all *green* quadruples (order by size, not taxa ID)
+- 
+
+I only want this for the maximal $k_{end}$, and I want to know how many times this happens. 
+
+```{r check, eval=T}
+load("../results/03_Simulation_checkForPattern.RData")
+
+dummy = PhyloDecSets_notFTT[,.N,by=c("solvedTaxa_ordered","n")]
+plot = ggplot(dummy, aes(x=N))+
+  facet_wrap(~n, scales = "free")+
+  geom_histogram(color="darkblue", fill="lightblue")
+plot
+
+dumTab = foreach(i = 6:10)%do%{
+  #i=9
+  myTab = copy(PhyloDecSets_notFTT)
+  myTab = myTab[n==i,]
+  
+  dummy2 = myTab[,.N,solvedTaxa_ordered]
+  dummy2[,relN := N/dim(myTab)[1]]
+  dummy2 = dummy2[relN>=0.1]
+  print(dummy2)
+  setorder(dummy2,-N)
+  
+  dumTab2 = foreach(j = 1:dim(dummy2)[1])%do%{
+    #j=1
+    myTab2 = copy(myTab)
+    myTab2 = myTab2[solvedTaxa_ordered == dummy2[j,solvedTaxa_ordered],]
+    
+    res = data.table(n=i,
+                   PosQuadruples = choose(i,4),
+                   PosNRTaxa = choose(i-1,3),
+                   green = max(myTab2$n_green),
+                   red = choose(i,4) - max(myTab2$n_green),
+                   MinNRTaxa = choose(i-1,3) - choose(i,4) + max(myTab2$n_green),
+                   patternCount =myTab2[n_green == max(n_green),table(solvedTaxa_ordered)[1]],
+                   relCount = dummy2[j,relN],
+                   minK = myTab2[,min(k)],
+                   maxK = myTab2[,max(k)],
+                   taxa = myTab2[n_green == max(n_green),unique(solvedTaxa_ordered)])
+    res
+  }
+  dumTab2 = rbindlist(dumTab2)
+  
+  dumTab2
+}
+FinalResult = rbindlist(dumTab)
+FinalResult
+save(FinalResult,file = "../results/03_FinalResult.RData")
+
+```
+
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
+
+
