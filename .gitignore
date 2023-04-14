@@ -42,3 +42,4 @@ vignettes/*.pdf
 archive/*
 temp/*
 figures/*
+results/03_Simulation_checkBound/*
