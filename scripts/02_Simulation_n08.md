@@ -56,10 +56,15 @@ load("../results/01_partitions/partitions_n08.RData")
 
 # Test-Loop with 10 combinations per k
 
+To test less $k$, I use as lower bound the minimal triple covering,
+$\frac{1}{4}\binom{n}{3}$. As upper bound I use
+$\binom{n}{4} - (n-4) -1$, as above this $k$ all sets are phylogenetic
+decisive.
+
 ``` r
 test1$data[,status:=NA]
 n=8
-LowerBound = ceiling(choose(n,3)/4)
+LowerBound = choose(n,3)/4
 UpperBound = choose(n,4) - n + 3
 
 dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
@@ -96,262 +101,262 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #> 
 #> Working on n=8, k=14
 #>        Working on 10 repeats of 193253756909160 combinations
-#>        Total time for n=8, k=14 & rep = 10: 0.38 minutes
+#>        Total time for n=8, k=14 & rep = 10: 0.189 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=15
 #>        Working on 10 repeats of 721480692460864 combinations
-#>        Total time for n=8, k=15 & rep = 10: 0.39 minutes
+#>        Total time for n=8, k=15 & rep = 10: 0.183 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=16
 #>        Working on 10 repeats of 2480089880334220 combinations
-#>        Total time for n=8, k=16 & rep = 10: 0.368 minutes
+#>        Total time for n=8, k=16 & rep = 10: 0.195 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=17
 #>        Working on 10 repeats of 7877932561061640 combinations
-#>        Total time for n=8, k=17 & rep = 10: 0.604 minutes
+#>        Total time for n=8, k=17 & rep = 10: 0.238 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=18
 #>        Working on 10 repeats of 23196134763125940 combinations
-#>        Total time for n=8, k=18 & rep = 10: 0.47 minutes
+#>        Total time for n=8, k=18 & rep = 10: 0.194 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=19
 #>        Working on 10 repeats of 63484158299081520 combinations
-#>        Total time for n=8, k=19 & rep = 10: 0.488 minutes
+#>        Total time for n=8, k=19 & rep = 10: 0.196 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=20
 #>        Working on 10 repeats of 161884603662657856 combinations
-#>        Total time for n=8, k=20 & rep = 10: 0.385 minutes
+#>        Total time for n=8, k=20 & rep = 10: 0.203 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=21
 #>        Working on 10 repeats of 385439532530137728 combinations
-#>        Total time for n=8, k=21 & rep = 10: 0.432 minutes
+#>        Total time for n=8, k=21 & rep = 10: 0.247 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=22
 #>        Working on 10 repeats of 858478958817124864 combinations
-#>        Total time for n=8, k=22 & rep = 10: 0.431 minutes
+#>        Total time for n=8, k=22 & rep = 10: 0.238 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=23
 #>        Working on 10 repeats of 1791608261879217152 combinations
-#>        Total time for n=8, k=23 & rep = 10: 0.594 minutes
+#>        Total time for n=8, k=23 & rep = 10: 0.231 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=24
 #>        Working on 10 repeats of 3508566179513466880 combinations
-#>        Total time for n=8, k=24 & rep = 10: 0.38 minutes
+#>        Total time for n=8, k=24 & rep = 10: 0.212 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=25
 #>        Working on 10 repeats of 6455761770304779264 combinations
-#>        Total time for n=8, k=25 & rep = 10: 0.401 minutes
+#>        Total time for n=8, k=25 & rep = 10: 0.253 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=26
 #>        Working on 10 repeats of 11173433833219811328 combinations
-#>        Total time for n=8, k=26 & rep = 10: 0.435 minutes
+#>        Total time for n=8, k=26 & rep = 10: 0.264 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=27
 #>        Working on 10 repeats of 18208558839321174016 combinations
-#>        Total time for n=8, k=27 & rep = 10: 0.523 minutes
+#>        Total time for n=8, k=27 & rep = 10: 0.346 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=28
 #>        Working on 10 repeats of 27963143931814662144 combinations
-#>        Total time for n=8, k=28 & rep = 10: 0.528 minutes
+#>        Total time for n=8, k=28 & rep = 10: 0.291 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=29
 #>        Working on 10 repeats of 40498346384007438336 combinations
-#>        Total time for n=8, k=29 & rep = 10: 0.544 minutes
+#>        Total time for n=8, k=29 & rep = 10: 0.297 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=30
 #>        Working on 10 repeats of 55347740058143899658 combinations
-#>        Total time for n=8, k=30 & rep = 10: 0.378 minutes
+#>        Total time for n=8, k=30 & rep = 10: 0.322 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=31
 #>        Working on 10 repeats of 71416438784701202432 combinations
-#>        Total time for n=8, k=31 & rep = 10: 0.358 minutes
+#>        Total time for n=8, k=31 & rep = 10: 0.309 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=32
 #>        Working on 10 repeats of 87038784768855392256 combinations
-#>        Total time for n=8, k=32 & rep = 10: 0.365 minutes
+#>        Total time for n=8, k=32 & rep = 10: 0.329 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=33
 #>        Working on 10 repeats of 1.00226479430802e+20 combinations
-#>        Total time for n=8, k=33 & rep = 10: 0.314 minutes
+#>        Total time for n=8, k=33 & rep = 10: 0.271 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=34
 #>        Working on 10 repeats of 1.09069992321756e+20 combinations
-#>        Total time for n=8, k=34 & rep = 10: 0.385 minutes
+#>        Total time for n=8, k=34 & rep = 10: 0.305 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=8, k=35
 #>        Working on 10 repeats of 1.12186277816662e+20 combinations
-#>        Total time for n=8, k=35 & rep = 10: 0.39 minutes
+#>        Total time for n=8, k=35 & rep = 10: 0.295 minutes
 #>        There were 1 of 2 sets identified by Fischers algorith as decisive (50%)
 #> 
 #> Working on n=8, k=36
 #>        Working on 10 repeats of 1.09069992321756e+20 combinations
-#>        Total time for n=8, k=36 & rep = 10: 0.312 minutes
+#>        Total time for n=8, k=36 & rep = 10: 0.294 minutes
 #>        There were 0 of 1 sets identified by Fischers algorith as decisive (0%)
 #> 
 #> Working on n=8, k=37
 #>        Working on 10 repeats of 1.00226479430802e+20 combinations
-#>        Total time for n=8, k=37 & rep = 10: 0.278 minutes
+#>        Total time for n=8, k=37 & rep = 10: 0.255 minutes
 #>        There were 1 of 1 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=38
 #>        Working on 10 repeats of 87038784768855392256 combinations
-#>        Total time for n=8, k=38 & rep = 10: 0.259 minutes
+#>        Total time for n=8, k=38 & rep = 10: 0.232 minutes
 #>        There were 2 of 2 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=39
 #>        Working on 10 repeats of 71416438784701202432 combinations
-#>        Total time for n=8, k=39 & rep = 10: 0.224 minutes
+#>        Total time for n=8, k=39 & rep = 10: 0.209 minutes
 #>        There were 1 of 1 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=40
 #>        Working on 10 repeats of 55347740058143899658 combinations
-#>        Total time for n=8, k=40 & rep = 10: 0.193 minutes
+#>        Total time for n=8, k=40 & rep = 10: 0.184 minutes
 #>        There were 4 of 4 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=41
 #>        Working on 10 repeats of 40498346384007438336 combinations
-#>        Total time for n=8, k=41 & rep = 10: 0.179 minutes
+#>        Total time for n=8, k=41 & rep = 10: 0.164 minutes
 #>        There were 8 of 8 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=42
 #>        Working on 10 repeats of 27963143931814662144 combinations
-#>        Total time for n=8, k=42 & rep = 10: 0.182 minutes
+#>        Total time for n=8, k=42 & rep = 10: 0.204 minutes
 #>        There were 5 of 6 sets identified by Fischers algorith as decisive (83.33%)
 #> 
 #> Working on n=8, k=43
 #>        Working on 10 repeats of 18208558839321174016 combinations
-#>        Total time for n=8, k=43 & rep = 10: 0.153 minutes
+#>        Total time for n=8, k=43 & rep = 10: 0.148 minutes
 #>        There were 5 of 5 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=44
 #>        Working on 10 repeats of 11173433833219811328 combinations
-#>        Total time for n=8, k=44 & rep = 10: 0.15 minutes
+#>        Total time for n=8, k=44 & rep = 10: 0.133 minutes
 #>        There were 7 of 7 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=45
 #>        Working on 10 repeats of 6455761770304779264 combinations
-#>        Total time for n=8, k=45 & rep = 10: 0.131 minutes
+#>        Total time for n=8, k=45 & rep = 10: 0.127 minutes
 #>        There were 8 of 8 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=46
 #>        Working on 10 repeats of 3508566179513466880 combinations
-#>        Total time for n=8, k=46 & rep = 10: 0.124 minutes
+#>        Total time for n=8, k=46 & rep = 10: 0.12 minutes
 #>        There were 9 of 9 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=47
 #>        Working on 10 repeats of 1791608261879217152 combinations
-#>        Total time for n=8, k=47 & rep = 10: 0.117 minutes
+#>        Total time for n=8, k=47 & rep = 10: 0.109 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=48
 #>        Working on 10 repeats of 858478958817124864 combinations
-#>        Total time for n=8, k=48 & rep = 10: 0.104 minutes
+#>        Total time for n=8, k=48 & rep = 10: 0.1 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=49
 #>        Working on 10 repeats of 385439532530137728 combinations
-#>        Total time for n=8, k=49 & rep = 10: 0.104 minutes
+#>        Total time for n=8, k=49 & rep = 10: 0.099 minutes
 #>        There were 9 of 9 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=50
 #>        Working on 10 repeats of 161884603662657856 combinations
-#>        Total time for n=8, k=50 & rep = 10: 0.1 minutes
+#>        Total time for n=8, k=50 & rep = 10: 0.094 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=51
 #>        Working on 10 repeats of 63484158299081520 combinations
-#>        Total time for n=8, k=51 & rep = 10: 0.123 minutes
+#>        Total time for n=8, k=51 & rep = 10: 0.098 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=52
 #>        Working on 10 repeats of 23196134763125940 combinations
-#>        Total time for n=8, k=52 & rep = 10: 0.228 minutes
+#>        Total time for n=8, k=52 & rep = 10: 0.09 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=53
 #>        Working on 10 repeats of 7877932561061640 combinations
-#>        Total time for n=8, k=53 & rep = 10: 0.115 minutes
+#>        Total time for n=8, k=53 & rep = 10: 0.091 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=54
 #>        Working on 10 repeats of 2480089880334220 combinations
-#>        Total time for n=8, k=54 & rep = 10: 0.103 minutes
+#>        Total time for n=8, k=54 & rep = 10: 0.085 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=55
 #>        Working on 10 repeats of 721480692460864 combinations
-#>        Total time for n=8, k=55 & rep = 10: 0.095 minutes
+#>        Total time for n=8, k=55 & rep = 10: 0.082 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=56
 #>        Working on 10 repeats of 193253756909160 combinations
-#>        Total time for n=8, k=56 & rep = 10: 0.085 minutes
+#>        Total time for n=8, k=56 & rep = 10: 0.075 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=57
 #>        Working on 10 repeats of 47465835030320 combinations
-#>        Total time for n=8, k=57 & rep = 10: 0.086 minutes
+#>        Total time for n=8, k=57 & rep = 10: 0.08 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=58
 #>        Working on 10 repeats of 10638894058520 combinations
-#>        Total time for n=8, k=58 & rep = 10: 0.083 minutes
+#>        Total time for n=8, k=58 & rep = 10: 0.072 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=59
 #>        Working on 10 repeats of 2163842859360 combinations
-#>        Total time for n=8, k=59 & rep = 10: 0.083 minutes
+#>        Total time for n=8, k=59 & rep = 10: 0.072 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=60
 #>        Working on 10 repeats of 396704524216 combinations
-#>        Total time for n=8, k=60 & rep = 10: 0.075 minutes
+#>        Total time for n=8, k=60 & rep = 10: 0.067 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=61
 #>        Working on 10 repeats of 65033528560 combinations
-#>        Total time for n=8, k=61 & rep = 10: 0.073 minutes
+#>        Total time for n=8, k=61 & rep = 10: 0.062 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=62
 #>        Working on 10 repeats of 9440350920 combinations
-#>        Total time for n=8, k=62 & rep = 10: 0.07 minutes
+#>        Total time for n=8, k=62 & rep = 10: 0.061 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=63
 #>        Working on 10 repeats of 1198774720 combinations
-#>        Total time for n=8, k=63 & rep = 10: 0.068 minutes
+#>        Total time for n=8, k=63 & rep = 10: 0.06 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=64
 #>        Working on 10 repeats of 131115985 combinations
-#>        Total time for n=8, k=64 & rep = 10: 0.067 minutes
+#>        Total time for n=8, k=64 & rep = 10: 0.058 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=8, k=65
 #>        Working on 10 repeats of 12103014 combinations
-#>        Total time for n=8, k=65 & rep = 10: 0.065 minutes
+#>        Total time for n=8, k=65 & rep = 10: 0.061 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 SimulationResults_n08_test = rbindlist(dumTab)
 
@@ -359,37 +364,37 @@ SimulationResults_n08_test[,posRate := NR_FTT/NR_PhyloDec]
 SimulationResults_n08_test[NR_PhyloDec==0,posRate := NA]
 SimulationResults_n08_test[NR_PhyloDec>0,]
 #>      k  time NR_NotPhyloDec NR_PhyloDec NR_FTT   posRate
-#>  1: 35 0.390              8           2      1 0.5000000
-#>  2: 36 0.312              9           1      0 0.0000000
-#>  3: 37 0.278              9           1      1 1.0000000
-#>  4: 38 0.259              8           2      2 1.0000000
-#>  5: 39 0.224              9           1      1 1.0000000
-#>  6: 40 0.193              6           4      4 1.0000000
-#>  7: 41 0.179              2           8      8 1.0000000
-#>  8: 42 0.182              4           6      5 0.8333333
-#>  9: 43 0.153              5           5      5 1.0000000
-#> 10: 44 0.150              3           7      7 1.0000000
-#> 11: 45 0.131              2           8      8 1.0000000
-#> 12: 46 0.124              1           9      9 1.0000000
-#> 13: 47 0.117              0          10     10 1.0000000
-#> 14: 48 0.104              0          10     10 1.0000000
-#> 15: 49 0.104              1           9      9 1.0000000
-#> 16: 50 0.100              0          10     10 1.0000000
-#> 17: 51 0.123              0          10     10 1.0000000
-#> 18: 52 0.228              0          10     10 1.0000000
-#> 19: 53 0.115              0          10     10 1.0000000
-#> 20: 54 0.103              0          10     10 1.0000000
-#> 21: 55 0.095              0          10     10 1.0000000
-#> 22: 56 0.085              0          10     10 1.0000000
-#> 23: 57 0.086              0          10     10 1.0000000
-#> 24: 58 0.083              0          10     10 1.0000000
-#> 25: 59 0.083              0          10     10 1.0000000
-#> 26: 60 0.075              0          10     10 1.0000000
-#> 27: 61 0.073              0          10     10 1.0000000
-#> 28: 62 0.070              0          10     10 1.0000000
-#> 29: 63 0.068              0          10     10 1.0000000
-#> 30: 64 0.067              0          10     10 1.0000000
-#> 31: 65 0.065              0          10     10 1.0000000
+#>  1: 35 0.295              8           2      1 0.5000000
+#>  2: 36 0.294              9           1      0 0.0000000
+#>  3: 37 0.255              9           1      1 1.0000000
+#>  4: 38 0.232              8           2      2 1.0000000
+#>  5: 39 0.209              9           1      1 1.0000000
+#>  6: 40 0.184              6           4      4 1.0000000
+#>  7: 41 0.164              2           8      8 1.0000000
+#>  8: 42 0.204              4           6      5 0.8333333
+#>  9: 43 0.148              5           5      5 1.0000000
+#> 10: 44 0.133              3           7      7 1.0000000
+#> 11: 45 0.127              2           8      8 1.0000000
+#> 12: 46 0.120              1           9      9 1.0000000
+#> 13: 47 0.109              0          10     10 1.0000000
+#> 14: 48 0.100              0          10     10 1.0000000
+#> 15: 49 0.099              1           9      9 1.0000000
+#> 16: 50 0.094              0          10     10 1.0000000
+#> 17: 51 0.098              0          10     10 1.0000000
+#> 18: 52 0.090              0          10     10 1.0000000
+#> 19: 53 0.091              0          10     10 1.0000000
+#> 20: 54 0.085              0          10     10 1.0000000
+#> 21: 55 0.082              0          10     10 1.0000000
+#> 22: 56 0.075              0          10     10 1.0000000
+#> 23: 57 0.080              0          10     10 1.0000000
+#> 24: 58 0.072              0          10     10 1.0000000
+#> 25: 59 0.072              0          10     10 1.0000000
+#> 26: 60 0.067              0          10     10 1.0000000
+#> 27: 61 0.062              0          10     10 1.0000000
+#> 28: 62 0.061              0          10     10 1.0000000
+#> 29: 63 0.060              0          10     10 1.0000000
+#> 30: 64 0.058              0          10     10 1.0000000
+#> 31: 65 0.061              0          10     10 1.0000000
 #>      k  time NR_NotPhyloDec NR_PhyloDec NR_FTT   posRate
 ```
 
@@ -410,7 +415,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
   x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
   message("       Total time for n=8, k=",j," & rep = 100: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
   
-  outfn = paste0("../results/02_SimulationsData_n08/SimulationResults_n8_k",k,"_rep10000.RData")
+  outfn = paste0("../results/02_SimulationsData_n08/SimulationResults_n8_k",j,"_rep10000.RData")
   save(myTest,file = outfn)
 
   tab = table(myTest$FWPP,myTest$FTT)
@@ -452,17 +457,23 @@ sessionInfo()
 #> [5] LC_TIME=German_Germany.utf8    
 #> 
 #> attached base packages:
-#> [1] stats     graphics  grDevices utils     datasets  methods   base     
+#> [1] grid      stats     graphics  grDevices utils     datasets  methods  
+#> [8] base     
 #> 
 #> other attached packages:
-#> [1] FixingTaxonTraceR_0.0.1 foreach_1.5.2           data.table_1.14.8      
+#> [1] cowplot_1.1.1           gtable_0.3.1            ggplot2_3.4.1          
+#> [4] FixingTaxonTraceR_0.0.1 foreach_1.5.2           data.table_1.14.8      
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] codetools_0.2-18 digest_0.6.31    magrittr_2.0.3   evaluate_0.20   
-#>  [5] rlang_1.0.6      cli_3.6.0        rmarkdown_2.20   iterators_1.0.14
-#>  [9] tools_4.2.2      xfun_0.37        yaml_2.3.7       fastmap_1.1.1   
-#> [13] compiler_4.2.2   htmltools_0.5.4  knitr_1.42
+#>  [1] rstudioapi_0.14  knitr_1.42       magrittr_2.0.3   munsell_0.5.0   
+#>  [5] colorspace_2.1-0 R6_2.5.1         rlang_1.0.6      fastmap_1.1.1   
+#>  [9] fansi_1.0.4      tools_4.2.2      xfun_0.37        utf8_1.2.3      
+#> [13] cli_3.6.0        withr_2.5.0      htmltools_0.5.4  iterators_1.0.14
+#> [17] yaml_2.3.7       digest_0.6.31    tibble_3.2.0     lifecycle_1.0.3 
+#> [21] vctrs_0.5.2      codetools_0.2-18 glue_1.6.2       evaluate_0.20   
+#> [25] rmarkdown_2.20   compiler_4.2.2   pillar_1.8.1     scales_1.2.1    
+#> [29] pkgconfig_2.0.3
 message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
 #> 
-#> TOTAL TIME : 21.823 minutes
+#> TOTAL TIME : 13.711 minutes
 ```

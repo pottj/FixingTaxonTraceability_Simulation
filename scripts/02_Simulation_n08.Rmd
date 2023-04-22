@@ -52,10 +52,12 @@ load("../results/01_partitions/partitions_n08.RData")
 
 # Test-Loop with 10 combinations per k
 
+To test less $k$, I use as lower bound the minimal triple covering, $\frac{1}{4}\binom{n}{3}$. As upper bound I use $\binom{n}{4} - (n-4) -1$, as above this $k$ all sets are phylogenetic decisive. 
+
 ```{r testloop}
 test1$data[,status:=NA]
 n=8
-LowerBound = ceiling(choose(n,3)/4)
+LowerBound = choose(n,3)/4
 UpperBound = choose(n,4) - n + 3
 
 dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
@@ -114,7 +116,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
   x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
   message("       Total time for n=8, k=",j," & rep = 100: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
   
-  outfn = paste0("../results/02_SimulationsData_n08/SimulationResults_n8_k",k,"_rep10000.RData")
+  outfn = paste0("../results/02_SimulationsData_n08/SimulationResults_n8_k",j,"_rep10000.RData")
   save(myTest,file = outfn)
 
   tab = table(myTest$FWPP,myTest$FTT)

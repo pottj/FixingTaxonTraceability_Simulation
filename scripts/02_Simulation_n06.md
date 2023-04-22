@@ -60,10 +60,15 @@ load("../results/01_partitions/partitions_n06.RData")
 
 # Test-Loop with 10 combinations per k
 
+To test less $k$, I use as lower bound the minimal triple covering,
+$\frac{1}{4}\binom{n}{3}$. As upper bound I use
+$\binom{n}{4} - (n-4) -1$, as above this $k$ all sets are phylogenetic
+decisive.
+
 ``` r
 test1$data[,status:=NA]
 n=6
-LowerBound = ceiling(choose(n,3)/4)
+LowerBound = choose(n,3)/4
 UpperBound = choose(n,4) - n + 3
 
 dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
@@ -111,7 +116,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=5 & rep = 10: 0.028 minutes
+#>        Total time for n=6, k=5 & rep = 10: 0.047 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=6, k=6
@@ -127,7 +132,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=6 & rep = 10: 0.035 minutes
+#>        Total time for n=6, k=6 & rep = 10: 0.044 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=6, k=7
@@ -143,7 +148,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=7 & rep = 10: 0.033 minutes
+#>        Total time for n=6, k=7 & rep = 10: 0.037 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=6, k=8
@@ -159,7 +164,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=8 & rep = 10: 0.034 minutes
+#>        Total time for n=6, k=8 & rep = 10: 0.038 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=6, k=9
@@ -175,7 +180,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=9 & rep = 10: 0.033 minutes
+#>        Total time for n=6, k=9 & rep = 10: 0.042 minutes
 #>        There were 0 of 0 sets identified by Fischers algorith as decisive (NaN%)
 #> 
 #> Working on n=6, k=10
@@ -191,7 +196,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=10 & rep = 10: 0.03 minutes
+#>        Total time for n=6, k=10 & rep = 10: 0.036 minutes
 #>        There were 5 of 5 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=6, k=11
@@ -207,7 +212,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=11 & rep = 10: 0.026 minutes
+#>        Total time for n=6, k=11 & rep = 10: 0.031 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 #> 
 #> Working on n=6, k=12
@@ -223,7 +228,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
 #>               Working on combination 8
 #>               Working on combination 9
 #>               Working on combination 10
-#>        Total time for n=6, k=12 & rep = 10: 0.017 minutes
+#>        Total time for n=6, k=12 & rep = 10: 0.022 minutes
 #>        There were 10 of 10 sets identified by Fischers algorith as decisive (100%)
 SimulationResults_n06_test = rbindlist(dumTab)
 
@@ -231,9 +236,9 @@ SimulationResults_n06_test[,posRate := NR_FTT/NR_PhyloDec]
 SimulationResults_n06_test[NR_PhyloDec==0,posRate := NA]
 SimulationResults_n06_test[NR_PhyloDec>0,]
 #>     k  time NR_NotPhyloDec NR_PhyloDec NR_FTT posRate
-#> 1: 10 0.030              5           5      5       1
-#> 2: 11 0.026              0          10     10       1
-#> 3: 12 0.017              0          10     10       1
+#> 1: 10 0.036              5           5      5       1
+#> 2: 11 0.031              0          10     10       1
+#> 3: 12 0.022              0          10     10       1
 ```
 
 # Loop with all combinations
@@ -256,7 +261,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
   x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
   message("       Total time for n=6, k=",j," & rep = 100: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
   
-  outfn = paste0("../results/02_SimulationsData_n06/SimulationResults_n6_k",k,"_rep10000.RData")
+  outfn = paste0("../results/02_SimulationsData_n06/SimulationResults_n6_k",j,"_rep10000.RData")
   save(myTest,file = outfn)
 
   tab = table(myTest$FWPP,myTest$FTT)
@@ -298,17 +303,23 @@ sessionInfo()
 #> [5] LC_TIME=German_Germany.utf8    
 #> 
 #> attached base packages:
-#> [1] stats     graphics  grDevices utils     datasets  methods   base     
+#> [1] grid      stats     graphics  grDevices utils     datasets  methods  
+#> [8] base     
 #> 
 #> other attached packages:
-#> [1] FixingTaxonTraceR_0.0.1 foreach_1.5.2           data.table_1.14.8      
+#> [1] cowplot_1.1.1           gtable_0.3.1            ggplot2_3.4.1          
+#> [4] FixingTaxonTraceR_0.0.1 foreach_1.5.2           data.table_1.14.8      
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] codetools_0.2-18 digest_0.6.31    magrittr_2.0.3   evaluate_0.20   
-#>  [5] rlang_1.0.6      cli_3.6.0        rmarkdown_2.20   iterators_1.0.14
-#>  [9] tools_4.2.2      xfun_0.37        yaml_2.3.7       fastmap_1.1.1   
-#> [13] compiler_4.2.2   htmltools_0.5.4  knitr_1.42
+#>  [1] rstudioapi_0.14  knitr_1.42       magrittr_2.0.3   munsell_0.5.0   
+#>  [5] colorspace_2.1-0 R6_2.5.1         rlang_1.0.6      fastmap_1.1.1   
+#>  [9] fansi_1.0.4      tools_4.2.2      xfun_0.37        utf8_1.2.3      
+#> [13] cli_3.6.0        withr_2.5.0      htmltools_0.5.4  iterators_1.0.14
+#> [17] yaml_2.3.7       digest_0.6.31    tibble_3.2.0     lifecycle_1.0.3 
+#> [21] vctrs_0.5.2      codetools_0.2-18 glue_1.6.2       evaluate_0.20   
+#> [25] rmarkdown_2.20   compiler_4.2.2   pillar_1.8.1     scales_1.2.1    
+#> [29] pkgconfig_2.0.3
 message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
 #> 
-#> TOTAL TIME : 0.346 minutes
+#> TOTAL TIME : 0.457 minutes
 ```

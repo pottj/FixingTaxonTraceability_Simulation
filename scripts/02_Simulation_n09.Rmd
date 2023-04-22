@@ -52,16 +52,16 @@ load("../results/01_partitions/partitions_n09.RData")
 
 # Test-Loop with 10 combinations per k
 
-To test less $k$, I use the more strict lower bound for touple numbers (see FTT R Package for more explanation).
+To test less $k$, I use as lower bound the minimal triple covering, $\frac{1}{4}\binom{n}{3}$. As upper bound I use $\binom{n}{4} - (n-4) -1$, as above this $k$ all sets are phylogenetic decisive. 
 
 ```{r testloop}
 test1$data[,status:=NA]
 n=9
-LowerBound = (1/6) * 4 * choose(n,2)
+LowerBound = choose(n,3)/4
 UpperBound = choose(n,4) - n + 3
 
 dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
-  # j=24
+  # j=21
   message("\nWorking on n=9, k=",j)
   time1 = Sys.time()
   myTest = SimulationFunction(number_taxa = n, 
@@ -118,7 +118,7 @@ dumTab = foreach(j=c(LowerBound:UpperBound))%do%{
   x0 = as.numeric(round(difftime(time2,time1,units = "mins"),3))
   message("       Total time for n=9, k=",j," & rep = 100: " ,round(difftime(time2,time1,units = "mins"),3)," minutes")
   
-  outfn = paste0("../results/02_SimulationsData_n09/SimulationResults_n9_k",k,"_rep10000.RData")
+  outfn = paste0("../results/02_SimulationsData_n09/SimulationResults_n9_k",j,"_rep10000.RData")
   save(myTest,file = outfn)
 
   tab = table(myTest$FWPP,myTest$FTT)
