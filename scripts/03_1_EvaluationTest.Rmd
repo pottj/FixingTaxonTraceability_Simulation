@@ -36,12 +36,12 @@ Upper bound: it was already shown that given an input of $\binom{n}{4} - (n-4)$ 
 * $n=9$: $126-5 = 121$
 * $n=10$: $210-6 = 204$
 
-Lower bound: there is no simple formula, but I use here my lower bound from my master thesis (set size that covers all triples or that covers all tuples adequately):
+Lower bound: the minimal triple covering, $\frac{1}{4}\binom{n}{3}$:
  
-* $n=6$: 6
-* $n=7$: 11
+* $n=6$: 5
+* $n=7$: 9
 * $n=8$: 14
-* $n=9$: 24
+* $n=9$: 21
 * $n=10$: 30
  
 # Initialize
@@ -61,17 +61,8 @@ x_upperBound = c()
 
 for(i in 6:10){
   #i=7
-  y = i %% 6
-  
-  if(y==0){
-    min_quad = 0.25 * choose(i,3) + i/6
-  }else if(y %in% c(2,4)){
-    min_quad = 0.25 * choose(i,3)
-  }else{
-    min_quad = (1/6) * ((i-1)/2) * choose(i,2) + i/12
-    min_quad = ceiling(min_quad)
-  }
-  x_lowerBound = c(x_lowerBound,min_quad)
+  min_quad = choose(i,3)/4
+  x_lowerBound = c(x_lowerBound,ceiling(min_quad))
   max_quad = choose(i,4) - (i-4)
   x_upperBound = c(x_upperBound,max_quad)
 }
@@ -277,9 +268,16 @@ tab9 = myStats_k[n==9 & filt_NPV,summary(NPV)]
 tab10 = myStats_k[n==10 & filt_NPV,summary(NPV)]
 tab_NPV = rbind(tab6,tab7,tab8,tab9,tab10)
 
-tabs = as.data.table(rbind(tab_NPV,tab_TPR))
-tabs[,n:=rep(c(6:10),2)]
-tabs[,Parameter:=c(rep("NPV",5),rep("TPR",5))]
+tab6 = myStats_k[n==6 & Prevalence!=0,summary(Prevalence)]
+tab7 = myStats_k[n==7 & Prevalence!=0,summary(Prevalence)]
+tab8 = myStats_k[n==8 & Prevalence!=0,summary(Prevalence)]
+tab9 = myStats_k[n==9 & Prevalence!=0,summary(Prevalence)]
+tab10 = myStats_k[n==10 & Prevalence!=0,summary(Prevalence)]
+tab_Prev = rbind(tab6,tab7,tab8,tab9,tab10)
+
+tabs = as.data.table(rbind(tab_Prev,tab_NPV,tab_TPR))
+tabs[,n:=rep(c(6:10),3)]
+tabs[,Parameter:=c(rep("Prev",5),rep("NPV",5),rep("TPR",5))]
 tabs = tabs[,c(8,7,1:6)]
 tabs
 
@@ -287,7 +285,9 @@ tabs
 LinePlotData3 = copy(myStats_k)
 LinePlotData3 = LinePlotData3[!is.na(PPV)]
 
+# Plot with colors
 p3 <- ggplot(LinePlotData3) +
+  geom_line(aes(x=k, y=Prevalence,col=as.factor(3)),linewidth=1,alpha=0.5)+
   geom_line(aes(x=k, y=NPV, col=as.factor(1)),linewidth=1,alpha=0.5) +
   geom_line(aes(x=k, y=TPR,col=as.factor(2)),linewidth=1,alpha=0.5)+
   facet_wrap(~ n, nrow = 3, scales = "free_x",strip.position = "top") +
@@ -296,13 +296,31 @@ p3 <- ggplot(LinePlotData3) +
   labs(x="Number of input quadruples                                            ",
        y = "",
        color = "Legend") + 
-  scale_color_manual(values = c("darkblue","orange"),
+  scale_color_manual(values = c("darkblue","orange","darkgreen"),
                      labels = c("Negative Predictive Value",
-                                "True Positive Rate (Power)"))
-#,"upper bound","upper bound (simulation)"
-
-
+                                "True Positive Rate (Power)",
+                                "Prevalence"))
 grid.draw(ShiftLegendBarplot(p3))
+
+# Plot with line types
+melt_data <- melt(LinePlotData3, id = c("n","k"),measure.vars = c("Prevalence","NPV","TPR")) 
+melt_data[variable=="NPV",variable := "Negative Predictive Value"]
+melt_data[variable=="TPR",variable := "True Positive Rate (Power)"]
+
+p3 <- ggplot(melt_data,aes(x=k, y=value, group=variable)) +
+  facet_wrap(~ n, 
+             nrow = 3, 
+             scales = "free_x",
+             strip.position = "top",
+             labeller=label_both) +
+  geom_line(aes(linetype=variable),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(), 
+        strip.placement = "outside")+
+  labs(x="Number of input quadruples                                            ",
+       y = "",
+       linetype = "Legend") 
+grid.draw(ShiftLegendBarplot(p3))
+
 
 test = copy(LinePlotData3)[TPR>0.9,]
 test = test[!duplicated(n)] 
