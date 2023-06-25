@@ -1,0 +1,178 @@
+---
+title: "Create Supplemental Figure"
+author: "Janne Pott"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here I only want to generate the plot for the publication (in black and white, and in color for online supplement). 
+
+```{r init}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+source("../helperFunctions/TestHelpRFunction.R")
+source("../helperFunctions/ShiftLegendBarplot.R")
+
+x_lowerBound = c()
+x_upperBound = c()
+
+for(i in 6:10){
+  #i=7
+  min_quad = choose(i,3)/4
+  x_lowerBound = c(x_lowerBound,ceiling(min_quad))
+  max_quad = choose(i,4) - (i-4)
+  x_upperBound = c(x_upperBound,max_quad)
+}
+
+```
+
+# Get data
+
+```{r input}
+load("../results/02_SimulationResults_n06.RData")
+load("../results/02_SimulationResults_n07.RData")
+load("../results/02_SimulationResults_n08.RData")
+load("../results/02_SimulationResults_n09.RData")
+load("../results/02_SimulationResults_n10.RData")
+
+SimulationResults_n06[,n := 6]
+SimulationResults_n07[,n := 7]
+SimulationResults_n08[,n := 8]
+SimulationResults_n09[,n := 9]
+SimulationResults_n10[,n := 10]
+
+sim_n6 = SimulationResults_n06[k>=x_lowerBound[1] & k<=x_upperBound[1]]
+sim_n7 = SimulationResults_n07[k>=x_lowerBound[2] & k<=x_upperBound[2]]
+sim_n8 = SimulationResults_n08[k>=x_lowerBound[3] & k<=x_upperBound[3]]
+sim_n9 = SimulationResults_n09[k>=x_lowerBound[4] & k<=x_upperBound[4]]
+sim_n10 = SimulationResults_n10[k>=x_lowerBound[5] & k<=x_upperBound[5]]
+
+sim = rbind(sim_n6,sim_n7,sim_n8,sim_n9,sim_n10)
+table(sim$n)
+
+```
+# Get contingecy tables
+
+```{r}
+dumTab3 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  
+  dumTab4 = foreach(k = 1:dim(mySim)[1])%do%{
+    # k=1
+    myRow = copy(mySim)
+    myRow = myRow[k,]
+    
+    stats_k = TestHelpRFunction(P = myRow$NR_PhyloDec,
+                            N = myRow$NR_NotPhyloDec,
+                            PP = myRow$NR_FTT)
+    stats_k[,n :=i]
+    stats_k[,k := myRow$k]
+    stats_k
+  }
+  myStats_k = rbindlist(dumTab4)
+  myStats_k
+}
+myStats_k = rbindlist(dumTab3)
+
+PlotData = copy(myStats_k)
+PlotData = PlotData[!is.na(PPV)]
+
+PlotData2 = melt(PlotData, id = c("n","k"),measure.vars = c("Prevalence","NPV","TPR")) 
+PlotData2[variable=="Prevalence",variable := "PREV"]
+PlotData2[,n2 := paste0("n=",n)]
+PlotData2[,n3 := factor(n2, levels=c('n=6','n=7','n=8','n=9',"n=10"))]
+setnames(PlotData2,"variable","Parameter")
+
+```
+
+# Plotting in color
+
+```{r}
+p1 <- ggplot(PlotData2,aes(x=k, y=value, group=Parameter, color = Parameter, shape = Parameter)) +
+  facet_wrap(~ n3, 
+             nrow = 3, 
+             scales = "free_x",
+             strip.position = "top") +
+  geom_point(size=2)+
+  geom_line(aes(linetype=Parameter),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text = element_text(face = "bold.italic"),
+        axis.title.x = element_text(size=14,face="bold"),
+        axis.title.y = element_text(size=14,face="bold"),
+        axis.text = element_text(size=12,face="bold"),
+        strip.text.x = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))+
+  labs(x="Number of input quadruples                                            ",
+       y = "")+
+  scale_color_manual(values = c("darkblue","orange","darkgreen")) +
+  guides(linetype="none")
+
+grid.draw(ShiftLegendBarplot(p1))
+
+tiff(filename = "../results/05_Figure_color.tiff", 
+     width = 2400, height = 2400, res=300, compression = 'lzw')
+grid.draw(ShiftLegendBarplot(p1))
+dev.off()
+
+png(filename = "../results/05_Figure_color.png", 
+     width = 2400, height = 2400, res=300)
+grid.draw(ShiftLegendBarplot(p1))
+dev.off()
+
+```
+
+# Plotting in in black and white
+
+```{r}
+p2 <- ggplot(PlotData2,aes(x=k, y=value, group=Parameter, color = Parameter, shape = Parameter)) +
+  facet_wrap(~ n3, 
+             nrow = 3, 
+             scales = "free_x",
+             strip.position = "top") +
+  geom_point(size=2)+
+  geom_line(aes(linetype=Parameter),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text = element_text(face = "bold.italic"),
+        axis.title.x = element_text(size=14,face="bold"),
+        axis.title.y = element_text(size=14,face="bold"),
+        axis.text = element_text(size=12,face="bold"),
+        strip.text.x = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))+
+  labs(x="Number of input quadruples                                            ",
+       y = "")+
+  scale_color_manual(values = c("black","#999999","#666666")) +
+  guides(linetype="none")
+
+grid.draw(ShiftLegendBarplot(p2))
+
+tiff(filename = "../results/05_Figure_bw.tiff", 
+     width = 2400, height = 2400, res=300, compression = 'lzw')
+grid.draw(ShiftLegendBarplot(p2))
+dev.off()
+
+png(filename = "../results/05_Figure_bw.png", 
+     width = 2400, height = 2400, res=300)
+grid.draw(ShiftLegendBarplot(p2))
+dev.off()
+
+```
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
