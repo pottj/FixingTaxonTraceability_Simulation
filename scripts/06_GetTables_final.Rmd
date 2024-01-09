@@ -1,0 +1,345 @@
+---
+title: "Simulation results"
+author: "Janne Pott"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+# Overview 
+
+I want to summarize my findings in two tables and one figure. 
+
+```{r init}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+source("../helperFunctions/TestHelpRFunction.R")
+source("../helperFunctions/ShiftLegendBarplot.R")
+
+x_lowerBound = c()
+x_upperBound = c()
+
+for(i in 6:10){
+  #i=7
+  min_quad = choose(i,3)/4 + 2
+  x_lowerBound = c(x_lowerBound,ceiling(min_quad))
+  max_quad = choose(i,4) - (i-3)
+  x_upperBound = c(x_upperBound,max_quad)
+}
+
+load("../results/02_SimulationResults_n06.RData")
+load("../results/02_SimulationResults_n07.RData")
+load("../results/02_SimulationResults_n08.RData")
+load("../results/02_SimulationResults_n09.RData")
+load("../results/02_SimulationResults_n10.RData")
+
+SimulationResults_n06[,n := 6]
+SimulationResults_n07[,n := 7]
+SimulationResults_n08[,n := 8]
+SimulationResults_n09[,n := 9]
+SimulationResults_n10[,n := 10]
+
+sim_n6 = SimulationResults_n06[k>=x_lowerBound[1] & k<=x_upperBound[1]]
+sim_n7 = SimulationResults_n07[k>=x_lowerBound[2] & k<=x_upperBound[2]]
+sim_n8 = SimulationResults_n08[k>=x_lowerBound[3] & k<=x_upperBound[3]]
+sim_n9 = SimulationResults_n09[k>=x_lowerBound[4] & k<=x_upperBound[4]]
+sim_n10 = SimulationResults_n10[k>=x_lowerBound[5] & k<=x_upperBound[5]]
+
+sim = rbind(sim_n6,sim_n7,sim_n8,sim_n9,sim_n10)
+table(sim$n)
+
+```
+
+# Table 1: Summary of simulation performance measures
+
+Median and interquantile range of the true positive rate (TPR), negative predictive value (NPV) and prevalence (Prev). 
+
+First, I get the TPR, NPV and Prev per n and k, and then I calculate the median and IQR per n. 
+
+```{r  contingencyTables1, eval=TRUE}
+dumTab3 = foreach(i = 6:10)%do%{
+  # i=6
+  mySim = copy(sim)
+  mySim = mySim[n == i,]
+  
+  dumTab4 = foreach(k = 1:dim(mySim)[1])%do%{
+    # k=1
+    myRow = copy(mySim)
+    myRow = myRow[k,]
+    
+    stats_k = TestHelpRFunction(P = myRow$NR_PhyloDec,
+                            N = myRow$NR_NotPhyloDec,
+                            PP = myRow$NR_FTT)
+    stats_k[,n :=i]
+    stats_k[,k := myRow$k]
+    stats_k
+  }
+  myStats_k = rbindlist(dumTab4)
+  myStats_k
+}
+myStats_k = rbindlist(dumTab3)
+
+tab1 = data.table(n = 6:10)
+
+filt_TPR = !is.na(myStats_k$TPR)
+tab6 = myStats_k[n==6 & filt_TPR,summary(TPR)]
+tab7 = myStats_k[n==7 & filt_TPR,summary(TPR)]
+tab8 = myStats_k[n==8 & filt_TPR,summary(TPR)]
+tab9 = myStats_k[n==9 & filt_TPR,summary(TPR)]
+tab10 = myStats_k[n==10 & filt_TPR,summary(TPR)]
+tab_TPR = rbind(tab6,tab7,tab8,tab9,tab10)
+tab1[,TPR := signif(tab_TPR[,3],2)]
+tab1[,TPR_IQR := paste0("[",signif(tab_TPR[,2],2),",",signif(tab_TPR[,5],2),"]")]
+
+filt_NPV = !is.na(myStats_k$NPV)
+tab6 = myStats_k[n==6 & filt_NPV,summary(NPV)]
+tab7 = myStats_k[n==7 & filt_NPV,summary(NPV)]
+tab8 = myStats_k[n==8 & filt_NPV,summary(NPV)]
+tab9 = myStats_k[n==9 & filt_NPV,summary(NPV)]
+tab10 = myStats_k[n==10 & filt_NPV,summary(NPV)]
+tab_NPV = rbind(tab6,tab7,tab8,tab9,tab10)
+tab1[,NPV := signif(tab_NPV[,3],2)]
+tab1[,NPV_IQR := paste0("[",signif(tab_NPV[,2],2),",",signif(tab_NPV[,5],2),"]")]
+
+tab6 = myStats_k[n==6 & Prevalence!=0,summary(Prevalence)]
+tab7 = myStats_k[n==7 & Prevalence!=0,summary(Prevalence)]
+tab8 = myStats_k[n==8 & Prevalence!=0,summary(Prevalence)]
+tab9 = myStats_k[n==9 & Prevalence!=0,summary(Prevalence)]
+tab10 = myStats_k[n==10 & Prevalence!=0,summary(Prevalence)]
+tab_Prev = rbind(tab6,tab7,tab8,tab9,tab10)
+tab1[,Prev := signif(tab_Prev[,3],2)]
+tab1[,Prev_IQR := paste0("[",signif(tab_Prev[,2],2),",",signif(tab_Prev[,5],2),"]")]
+tab1
+knitr::kable(tab1)
+
+knitr::kable(tab1, "latex")
+```
+
+
+# Table 2: Lower and upper bounds of FTT and 4WPP
+
+Bounds on the number $k_n$ of quadruples found in a set S of taxon sets fulfilling the four-way partition property (4WPP = x) or not (4WPP = -), or fulfilling fixing taxon traceability (FTT = x) or not (FTT = -). 
+
+```{r contingencyTables2, eval=TRUE}
+load("../results/03_FinalResult.RData")
+load("../results/03_4_UpperBound.RData")
+dummy = FinalResult[,max(green),by=n]
+dummy2 = myResult$green
+
+x1 = myStats_k[Prevalence!=0,min(k),by = n]
+y1 = myStats_k[Prevalence<1,max(k),by = n]
+x2 = myStats_k[Prevalence!=0 & TPR>0,min(k),by = n]
+y2 = sim[posRate<1,max(k),by = n]
+
+tab2 = copy(x1)
+setnames(tab2,"V1","k_min_4WPP_sim")
+tab2[,k_min_4WPP_theo := x_lowerBound]
+
+tab2[,k_min_FTT_sim := x2$V1]
+tab2[,k_min_FTT_theo := choose(n = n-1,3)]
+
+tab2[,k_max_diff_sim := y2$V1]
+tab2[,k2_max_diff_sim := dummy$V1]
+tab2[,k_max_diff_theo := choose(n = n,4) - 3*n +13]
+
+tab2[,k_max_4WPP_sim := y1$V1]
+tab2[,k2_max_4WPP_sim := dummy2]
+tab2[,k_max_4WPP_theo := x_upperBound]
+
+tab2 = t(tab2)
+knitr::kable(tab2)
+
+
+
+```
+
+# Figure 1: Performance per k
+
+## Preparation
+
+```{r plotPrep}
+PlotData = copy(myStats_k)
+PlotData = PlotData[!is.na(PPV)]
+
+PlotData2 = melt(PlotData, 
+                 id = c("n","k"),
+                 measure.vars = c("Prevalence","NPV","TPR")) 
+PlotData2[variable=="Prevalence",variable := "PREV"]
+PlotData2[,n2 := paste0("n=",n)]
+PlotData2[,n3 := factor(n2, levels=c('n=6','n=7','n=8','n=9',"n=10"))]
+setnames(PlotData2,"variable","Parameter")
+
+```
+
+## Plotting in color
+
+```{r plot1}
+p1 <- ggplot(PlotData2,aes(x=k, y=value, group=Parameter, color = Parameter, shape = Parameter)) +
+  facet_wrap(~ n3, 
+             nrow = 3, 
+             scales = "free_x",
+             strip.position = "top") +
+  geom_point(size=2)+
+  geom_line(aes(linetype=Parameter),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text = element_text(face = "bold.italic"),
+        axis.title.x = element_text(size=14,face="bold"),
+        axis.title.y = element_text(size=14,face="bold"),
+        axis.text = element_text(size=12,face="bold"),
+        strip.text.x = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))+
+  labs(x="Number of input quadruples                                            ",
+       y = "")+
+  scale_color_manual(values = c("darkblue","orange","darkgreen")) +
+  guides(linetype="none")
+
+grid.draw(ShiftLegendBarplot(p1))
+
+tiff(filename = "../results/06_Figure_color.tiff", 
+     width = 2400, height = 2400, res=300, compression = 'lzw')
+grid.draw(ShiftLegendBarplot(p1))
+dev.off()
+
+png(filename = "../results/06_Figure_color.png", 
+     width = 2400, height = 2400, res=300)
+grid.draw(ShiftLegendBarplot(p1))
+dev.off()
+
+```
+
+## Plotting in black and white
+
+```{r plot2}
+p2 <- ggplot(PlotData2,aes(x=k, y=value, group=Parameter, color = Parameter, shape = Parameter)) +
+  facet_wrap(~ n3, 
+             nrow = 3, 
+             scales = "free_x",
+             strip.position = "top") +
+  geom_point(size=2)+
+  geom_line(aes(linetype=Parameter),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text = element_text(face = "bold.italic"),
+        axis.title.x = element_text(size=14,face="bold"),
+        axis.title.y = element_text(size=14,face="bold"),
+        axis.text = element_text(size=12,face="bold"),
+        strip.text.x = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))+
+  labs(x="Number of input quadruples                                            ",
+       y = "")+
+  scale_color_manual(values = c("black","#999999","#666666")) +
+  guides(linetype="none")
+
+grid.draw(ShiftLegendBarplot(p2))
+
+tiff(filename = "../results/06_Figure_bw.tiff", 
+     width = 2400, height = 2400, res=300, compression = 'lzw')
+grid.draw(ShiftLegendBarplot(p2))
+dev.off()
+
+png(filename = "../results/06_Figure_bw.png", 
+     width = 2400, height = 2400, res=300)
+grid.draw(ShiftLegendBarplot(p2))
+dev.off()
+
+```
+
+## Plotting in percents
+
+```{r plot3}
+PlotData3 = copy(PlotData2)
+PlotData3[n==6,k2 := k/choose(6,4)]
+PlotData3[n==7,k2 := k/choose(7,4)]
+PlotData3[n==8,k2 := k/choose(8,4)]
+PlotData3[n==9,k2 := k/choose(9,4)]
+PlotData3[n==10,k2 := k/choose(10,4)]
+
+p3 <- ggplot(PlotData3,aes(x=k2, y=value, group=Parameter, color = Parameter, shape = Parameter)) +
+  facet_wrap(~ n3, 
+             nrow = 3, 
+             scales = "fixed",
+             strip.position = "top") +
+  geom_point(size=2)+
+  geom_line(aes(linetype=Parameter),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text = element_text(face = "bold.italic"),
+        axis.title.x = element_text(size=14,face="bold"),
+        axis.title.y = element_text(size=14,face="bold"),
+        axis.text = element_text(size=12,face="bold"),
+        strip.text.x = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))+
+  labs(x="% of all possible quadruples                                            ",
+       y = "")+
+  scale_color_manual(values = c("black","#999999","#666666")) +
+  guides(linetype="none")
+
+grid.draw(ShiftLegendBarplot(p3))
+
+tiff(filename = "../results/06_Figure_bw_perc.tiff", 
+     width = 2400, height = 2400, res=300, compression = 'lzw')
+grid.draw(ShiftLegendBarplot(p3))
+dev.off()
+
+png(filename = "../results/06_Figure_bw_perc.png", 
+     width = 2400, height = 2400, res=300)
+grid.draw(ShiftLegendBarplot(p3))
+dev.off()
+
+```
+
+## Plotting per n
+
+```{r plot4}
+PlotData3[Parameter == "PREV",Parameter := "Prevalence"]
+PlotData3[Parameter == "TPR",Parameter := "True Positive Rate (Power)"]
+PlotData3[Parameter == "NPV",Parameter := "Negative Predictive Value"]
+
+p4 <- ggplot(PlotData3,aes(x=k2, y=value, group=n3, color = n3, shape = n3)) +
+  facet_wrap(~ Parameter, 
+             nrow = 3, 
+             scales = "free_y",
+             strip.position = "top") +
+  geom_point(size=2)+
+  geom_line(aes(linetype=n3),linewidth=1,alpha=0.75)+
+  theme(strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text = element_text(face = "bold.italic"),
+        axis.title.x = element_text(size=14,face="bold"),
+        axis.title.y = element_text(size=14,face="bold"),
+        axis.text = element_text(size=12,face="bold"),
+        strip.text.x = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))+
+  labs(x="% of all possible quadruples",
+       color = "# taxa",
+       y = "")+
+  #scale_color_manual(values = c("black","#999999","#666666")) +
+  guides(linetype="none",shape="none")
+
+p4
+
+tiff(filename = "../results/06_Figure_perc_byParameter.tiff", 
+     width = 2400, height = 2400, res=300, compression = 'lzw')
+p4
+dev.off()
+
+png(filename = "../results/06_Figure_perc_byParameter.png", 
+     width = 2400, height = 2400, res=300)
+p4
+dev.off()
+
+```
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
