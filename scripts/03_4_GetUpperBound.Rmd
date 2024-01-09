@@ -1,0 +1,148 @@
+---
+title: "Evaluation 4: get tight upper bound"
+subtitle: "Simulation evaluation"
+author: "Janne Pott"
+date: "`r Sys.Date()`"
+output: github_document
+---  
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+The upper bound not decisive sets is given as
+
+$$\binom{n}{4} - (n-4)+1 $$
+
+E.g., for $n=6$, the bound is $\binom{6}{4} - 3 = 12$, so there are sets of size 12 which are neither decisive nor fixing taxon traceable. Here I just want to check if this bound is always met. 
+
+(In the simulation, we did not test all possible combinations for the maximal $k_n$, hence we might have missed those sets in the direct test, but tested them with a lower starting $k$ with additional resolved quadruples.)
+
+
+```{r setup}
+rm(list = ls())
+time0<-Sys.time()
+
+source("../SourceFile.R")
+
+```
+
+# Load data
+
+```{r load}
+load("../results/02_SimulationResults_n06.RData")
+load("../results/02_SimulationResults_n07.RData")
+load("../results/02_SimulationResults_n08.RData")
+load("../results/02_SimulationResults_n09.RData")
+load("../results/02_SimulationResults_n10.RData")
+
+SimulationResults_n06[,n := 6]
+SimulationResults_n07[,n := 7]
+SimulationResults_n08[,n := 8]
+SimulationResults_n09[,n := 9]
+SimulationResults_n10[,n := 10]
+
+sim = rbind(SimulationResults_n06,SimulationResults_n07,SimulationResults_n08,SimulationResults_n09,SimulationResults_n10)
+Sim = copy(sim)
+
+dumTab = foreach(i=1:dim(Sim)[1])%do%{
+  #i=357
+  myRow = Sim[i,]
+  myk = myRow$k
+  myn = myRow$n
+  
+  if(myn<10){
+      filefn = paste0("../results/02_SimulationsData_n0",myn,"/SimulationResults_n",myn,"_k",myk,"_rep10000.RData")
+  }else{
+      filefn = paste0("../results/02_SimulationsData_n",myn,"/SimulationResults_n",myn,"_k",myk,"_rep10000.RData")
+  }
+  load(filefn)
+  myTest = myTest[FWPP == "NOT PhyloDec",]
+  if(dim(myTest)[1]==0){
+    res = data.table(n=myn, 
+                     k=myk, 
+                     FWPP = T, 
+                     FixingTaxa = T,
+                     input = NA)
+  }else{
+    res = data.table(n=myn, 
+                     k=myk, 
+                     FWPP = F, 
+                     FixingTaxa = F,
+               input = myTest$input)
+
+      }
+  res
+}
+
+PhyloDecSets_notFTT = rbindlist(dumTab)
+PhyloDecSets_notFTT[,table(n,FWPP)]
+PhyloDecSets_notFTT = PhyloDecSets_notFTT[FWPP==F,]
+
+```
+
+# Test data 
+
+I want to test if I have sets starting with some input $k$ and ending with additional resolved quadruples so that the sum of input and solved quadruples equals the tight bound. 
+
+```{r test}
+dumTab = foreach(i = 6:10)%do%{
+  #i=6
+  dumTab1 = copy(PhyloDecSets_notFTT)
+  dumTab1 = dumTab1[n==i,]
+  
+  setorder(dumTab1,-k)
+  
+  tracer = FALSE
+  theo_threshold = choose(i,4) - (i-3)
+    
+  while(tracer == F & dim(dumTab1)[1]>0){
+    dumTab2 = dumTab1[1,]
+    myInput = dumTab1[1,input]
+    myInput = unlist(strsplit(myInput,split = "[|]"))
+    myOutput = data.table(myInput = myInput)
+    myFn = paste0("../results/03_4_GetUpperBound/Example.txt")
+    fwrite(myOutput,file=myFn,col.names = F)
+    TestData = FTT_createInput(fn = myFn, sepSym = "_",c = 4)
+    TestFTT = FTT_algorithmRed(data=TestData$data,
+                               verbose = F,c = 4,n = myRow$n)
+        
+    testStatus = TestFTT[,.N,by=status]
+    sim_res = testStatus[status != "unresolved",sum(N)]
+    
+    if(theo_threshold == sim_res){
+        myResult = dumTab1[1,]
+        myResult[,green := sim_res]
+        myResult[,rounds := max(TestFTT$round)]
+        print(myResult)
+        myResult
+        tracer = TRUE
+    }else{
+      dumTab1 = dumTab1[-1,]
+    }
+  }
+  myResult
+}
+
+myResult = rbindlist(dumTab)
+myResult[,c(1,2,6,7)]
+save(myResult,file = "../results/03_4_UpperBound.RData")
+
+```
+
+Okay, it worked :)
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+message("\nTOTAL TIME : " ,round(difftime(Sys.time(),time0,units = "mins"),3)," minutes")
+
+```
+
+
